@@ -1,0 +1,71 @@
+:root{
+    --bg:#fbf8ff;
+    --card:#ffffff;--muted:#6b6478;--accent:#6b21a8
+    --muted:#6b6478;
+    --accent:#5c2489;
+}
+
+*{
+    box-sizing:border-box;
+}
+
+
+body{
+    font-family:Inter, system-ui, -apple-system, 'Segoe UI', Roboto, Arial; 
+    background:var(--bg); 
+    color:#111827; 
+    margin:0; 
+    padding:28px;
+}
+
+header h1{
+    margin:0;
+    font-size:26px;
+    color:var(--accent);
+}
+
+.tagline{
+    color:var(--muted);
+    margin-top:6px;
+}
+
+.doc{
+    background:var(--card);
+    border-radius:8px;
+    padding:18px;
+    margin-top:18px;
+    border:1px solid rgba(107,100,120,0.06);
+}
+
+h2{
+    color:var(--accent);
+    margin-top:0;
+}
+
+ul{
+    line-height:1.6;
+    padding-left:18px;
+}
+
+code{
+    background:#f3f0f7;
+    padding:2px 6px;
+    border-radius:6px;
+    font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;
+}
+
+.footer{
+    color:var(--muted);
+    font-size:13px;
+    text-align:center;
+    padding:18px 0;
+}
+
+@media (max-width:600px){
+    body{
+        padding:16px;
+    }
+    .container{
+        padding:0;
+    }
+}
