@@ -9,5 +9,28 @@
 <body>
     <h1>Projet de mini banque</h1>
     <p>Ceci est un projet de mini banque avec du JS</p>
+    <section>
+        <h2>Utilisation en console (fonctions disponibles)</h2>
+        <p>Ouvrez la console du navigateur (F12) et utilisez les fonctions suivantes :</p>
+        <ul>
+            <li><code>createClient(prenom, nom)</code> — crée et retourne un nouvel objet client. Ex : <code>const c = createClient('Jean','Dupont')</code></li>
+            <li><code>createBankAccount(clientId, solde = 0, type = 'courant')</code> — crée un compte pour un client existant. Ex : <code>const a = createBankAccount(c.id, 100, 'épargne')</code></li>
+            <li><code>deleteBankAccount(accountId)</code> — supprime un compte si son solde est à 0. Ex : <code>deleteBankAccount(a.id)</code></li>
+            <li><code>deposit(accountId, amount)</code> — dépôt sur un compte (amount > 0). Ex : <code>deposit(a.id, 50)</code></li>
+            <li><code>withdraw(accountId, amount)</code> — retrait (amount > 0 et ≤ solde). Ex : <code>withdraw(a.id, 25)</code></li>
+            <li><code>transfer(fromAccountId, toAccountId, amount)</code> — transfert entre comptes (crée deux entrées en historique). Ex : <code>transfer(a.id, comptesBancaires[0].id, 10)</code></li>
+            <li><code>getAccountBalance(accountId)</code> — retourne le solde du compte. Ex : <code>getAccountBalance(a.id)</code></li>
+            <li><code>getAccountHistory(accountId)</code> — retourne l'historique des transactions du compte. Ex : <code>getAccountHistory(a.id)</code></li>
+            <li><code>getTotalBalance(id)</code> — si <code>id</code> est un client retourne la somme de tous ses comptes, si c'est un compte retourne le solde du compte. Ex : <code>getTotalBalance(c.id)</code> ou <code>getTotalBalance(a.id)</code></li>
+            <li><code>getBankTotalBalance()</code> — retourne la somme de tous les comptes de la banque.</li>
+            <li><code>clients</code> et <code>comptesBancaires</code> — tableaux exposés pour inspection directe (console.log les affiche).</li>
+        </ul>
+        <h3>Notes</h3>
+        <ul>
+            <li>Les fonctions loggent des messages d'erreur avec <code>console.log</code> lorsque l'opération est invalide (compte non trouvé, montant invalide, etc.).</li>
+            <li>Les transactions sont stockées dans <code>account.history</code> avec : <code>{ id, type, amount, balanceAfter, timestamp }</code>.</li>
+            <li>Rechargez la page pour revenir à l'état initial si besoin.</li>
+        </ul>
+    </section>
 </body>
 </html>

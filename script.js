@@ -1,285 +1,120 @@
 /**
- * Création de la base client.
+ * Création de l'UUID.
+ */
+const UUID = (typeof crypto !== 'undefined' && crypto.randomUUID)
+  ? crypto.randomUUID.bind(crypto)
+  : () => Date.now().toString(36) + Math.random().toString(36).slice(2);
+
+/**
+ * Création d'une base de donnée cliente fixe.
  */
 
 const clients = [
-    {
-        id: '5e385eab-f13b-466a-9dff-e3b9121382c3',
-        nom: 'Henry',
-        prenom: 'Charles'
-    },
-    {
-        id: '5695efb5-6cd1-4c39-8901-8bf33dc69801',
-        nom: 'Sylvie',
-        prenom: 'Sophie'
-    },
-    {
-        id: '132976a7-1dd5-46de-9e6a-712603ad4288',
-        nom: 'Durand',
-        prenom: 'Paul'
-    }
+  { id: '5e385eab-f13b-466a-9dff-e3b9121382c3', nom: 'Henry', prenom: 'Charles' },
+  { id: '5695efb5-6cd1-4c39-8901-8bf33dc69801', nom: 'Sylvie', prenom: 'Sophie' },
+  { id: '132976a7-1dd5-46de-9e6a-712603ad4288', nom: 'Durand', prenom: 'Paul' }
 ];
 
-console.log(clients);
-
 /**
- * Création des comptes bancaires des clients préexistants.
+ * Création d'une base de donnée de comptes bancaires fixe.
  */
 
 const comptesBancaires = [
-    {
-        id: 'a1f5c3e2-3b6d-4f8e-9c2d-1e2f3a4b5c6d',
-        clientId: '5e385eab-f13b-466a-9dff-e3b9121382c3',
-        solde: 1500.00,
-        type: 'courant',
-        history: []
-    },
-    {
-        id: 'b2g6d4f3-4c7e-5g9f-0d3e-2f3g4b5c6d7e',
-        clientId: '5695efb5-6cd1-4c39-8901-8bf33dc69801',
-        solde: 2500.50,
-        type: 'épargne',
-        history: []
-    },
-    {
-        id: 'c3h7e5g4-5d8f-6h0g-1e4f-3g4h5c6d7e8f',
-        clientId: '132976a7-1dd5-46de-9e6a-712603ad4288',
-        solde: 300.75,
-        type: 'courant',
-        history: []
-    }
-];  
-
-console.log(comptesBancaires);
-
-/**
- * Possibilité de créer des nouveaux clients
- **/
-
-// Fonction pour générer un identifiant unique. (uuid crypto)
-const UUID = crypto.randomUUID.bind(crypto);
-
-// Fonction pour créer un nouveau client
-const createClient = (FirstName, LastName) => {
-    const newClient = {
-        id: UUID(),
-        nom: LastName,
-        prenom: FirstName
-    };
-    clients.push(newClient);
-    console.log('Nouveau client créé:', newClient);
-}
-
-/**
- * Possibilité de créer un nouveau compte bancaire pour un client existant
- */
-
-// Fonction pour créer un nouveau compte bancaire
-const createBankAccount = (clientId, initialBalance, accountType) => {
-    // Vérifier si le client existe
-    const clientExists = clients.some(client => client.id === clientId);
-    if (!clientExists) {
-        console.log('Client non trouvé. Impossible de créer un compte bancaire.');
-        return;
-    }
-
-    const newAccount = {
-        id: UUID(),
-        clientId: clientId,
-        solde: initialBalance,
-        type: accountType
-    };
-    // initialiser l'historique des transactions pour le nouveau compte
-    newAccount.history = [];
-    comptesBancaires.push(newAccount);
-    console.log('Nouveau compte bancaire créé:', newAccount);
-}
-
-/**
- * Supprimer un compte bancaire
- */
-
-const deleteBankAccount = (accountId) => {
-    const accountIndex = comptesBancaires.findIndex(account => account.id === accountId);
-    if (accountIndex === -1) {
-        console.log('Compte bancaire non trouvé. Impossible de le supprimer.');
-        return;
-    }
-    comptesBancaires.splice(accountIndex, 1);
-    console.log(`Compte bancaire avec l'ID ${accountId} supprimé.`);
-}
-
-/**
- * Déposer de l'argent sur le compte d'un client.
- */
-
-const deposit = (accountId, amount) => {
-    const account = comptesBancaires.find(account => account.id === accountId);
-    if (!account) {
-        console.log('Compte bancaire non trouvé. Impossible de déposer de l\'argent.');
-        return;
-    }
-    if (amount <= 0) {
-        console.log('Le montant du dépôt doit être supérieur à zéro.');
-        return;
-    }
-    account.solde += amount;
-    console.log(`Dépôt de ${amount} effectué sur le compte ${accountId}. Nouveau solde: ${account.solde}`);
-    // Enregistrer la transaction dans l'historique du compte
-    const depositTx = {
-        id: UUID(),
-        type: 'deposit',
-        amount,
-        balanceAfter: account.solde,
-        timestamp: new Date().toISOString()
-    };
-    account.history = account.history || [];
-    account.history.push(depositTx);
-    console.log('Transaction enregistrée dans l\'historique:', depositTx);
-}
-
-/**
- * Retirer de l'argent du compte d'un client.
- */
-
-const withdraw = (accountId, amount) => {
-    const account = comptesBancaires.find(account => account.id === accountId);
-    if (!account) {
-        console.log('Compte bancaire non trouvé. Impossible de retirer de l\'argent.');
-        return;
-    }
-    if (amount <= 0) {
-        console.log('Le montant du retrait doit être supérieur à zéro.');
-        return;
-    }
-    if (amount > account.solde) {
-        console.log('Fonds insuffisants pour ce retrait.');
-        return;
-    }
-    account.solde -= amount;
-    console.log(`Retrait de ${amount} effectué sur le compte ${accountId}. Nouveau solde: ${account.solde}`);
-    // Enregistrer la transaction dans l'historique du compte
-    const withdrawTx = {
-        id: UUID(),
-        type: 'withdraw',
-        amount,
-        balanceAfter: account.solde,
-        timestamp: new Date().toISOString()
-    };
-    account.history = account.history || [];
-    account.history.push(withdrawTx);
-    console.log('Transaction enregistrée dans l\'historique:', withdrawTx);
-}
-
-/**
- * Possibilité de trasnférer de l'argent entre deux comptes bancaires.
- **/
-
-const transfer = (fromAccountId, toAccountId, amount) => {
-    const fromAccount = comptesBancaires.find(account => account.id === fromAccountId);
-    const toAccount = comptesBancaires.find(account => account.id === toAccountId);
-
-    if (!fromAccount) {
-        console.log('Compte bancaire source non trouvé. Impossible de transférer de l\'argent.');
-        return;
-    }
-    if (!toAccount) {
-        console.log('Compte bancaire de destination non trouvé. Impossible de transférer de l\'argent.');
-        return;
-    }
-    if (amount <= 0) {
-        console.log('Le montant du transfert doit être supérieur à zéro.');
-        return;
-    }
-    if (amount > fromAccount.solde) {
-        console.log('Fonds insuffisants pour ce transfert.');
-        return;
-    }
-
-    fromAccount.solde -= amount;
-    toAccount.solde += amount;
-    console.log(`Transfert de ${amount} de ${fromAccountId} à ${toAccountId} effectué.`);
-    console.log(`Nouveau solde du compte source: ${fromAccount.solde}`);
-    console.log(`Nouveau solde du compte de destination: ${toAccount.solde}`);
-    // Enregistrer les transactions horodatées dans l'historique des deux comptes
-    const timestamp = new Date().toISOString();
-    const debitTx = {
-        id: UUID(),
-        type: 'transfer-debit',
-        amount,
-        balanceAfter: fromAccount.solde,
-        counterparty: toAccountId,
-        timestamp
-    };
-    const creditTx = {
-        id: UUID(),
-        type: 'transfer-credit',
-        amount,
-        balanceAfter: toAccount.solde,
-        counterparty: fromAccountId,
-        timestamp
-    };
-    fromAccount.history = fromAccount.history || [];
-    toAccount.history = toAccount.history || [];
-    fromAccount.history.push(debitTx);
-    toAccount.history.push(creditTx);
-    console.log('Transactions enregistrées dans les historiques:', debitTx, creditTx);
-}
-
-/**
- * Possibilité d'afficher le solde d'un compte bancaire pour un client id donné.
- */
-
-const getAccountBalance = (accountId) => {
-    const account = comptesBancaires.find(account => account.id === accountId);
-    if (!account) {
-        console.log('Compte bancaire non trouvé.');
-        return;
-    }
-    console.log(`Le solde du compte ${accountId} est de: ${account.solde}`);
-    return account.solde;
-}
-
-
-/**
- * Possibilité d'afficher l'historique des transactions pour un compte donné.
- */
-
-const getAccountHistory = (accountId) => {
-    const account = comptesBancaires.find(account => account.id === accountId);
-    if (!account) {
-        console.log('Compte bancaire non trouvé.');
-        return;
-    }
-    if (!account.history || account.history.length === 0) {
-        console.log('Aucune transaction trouvée pour ce compte.');
-        return;
-    }
-    console.log(`Historique des transactions pour le compte ${accountId}:`, account.history);
-    return account.history;
-}
+  { id: 'a1f5c3e2-3b6d-4f8e-9c2d-1e2f3a4b5c6d', clientId: clients[0].id, solde: 1500, type: 'courant', history: [] },
+  { id: 'b2g6d4f3-4c7e-5g9f-0d3e-2f3g4b5c6d7e', clientId: clients[1].id, solde: 2500.5, type: 'épargne', history: [] },
+  { id: 'c3h7e5g4-5d8f-6h0g-1e4f-3g4h5c6d7e8f', clientId: clients[2].id, solde: 300.75, type: 'courant', history: [] }
+];
 
 /** 
- * Possibilité d'afficher l'argent total détenu par un client sur tous ses comptes.
- */
+ * Fonction utilitaire pour trouver un compte par son ID.
+*/
 
-const getTotalBalance = (clientId) => {
-    const clientAccounts = comptesBancaires.filter(account => account.clientId === clientId);
-    if (clientAccounts.length === 0) {
-        console.log('Aucun compte bancaire trouvé pour ce client.');
-        return;
-    }
-    const totalBalance = clientAccounts.reduce((total, account) => total + account.solde, 0);
-    console.log(`Le solde total pour le client ${clientId} est de: ${totalBalance}`);
-    return totalBalance;
-}
+const findAcct = id => comptesBancaires.find(a => a.id === id);
+const pushTx = (acct, type, amount, meta = {}) => {
+  acct.history = acct.history || [];
+  acct.history.push(Object.assign({ id: UUID(), type, amount, balanceAfter: acct.solde, timestamp: new Date().toISOString() }, meta));
+};
 
 /**
- * Possibilité d'afficher l'argent total détenu par la banque sur tous les comptes.
+ * Fonction pour créer un client.
  */
 
-const getBankTotalBalance = () => {
-    const totalBalance = comptesBancaires.reduce((total, account) => total + account.solde, 0);
-    console.log(`Le solde total détenu par la banque sur tous les comptes est de: ${totalBalance}`);
-    return totalBalance;
-}
+const createClient = (prenom, nom) => {
+  const c = { id: UUID(), nom, prenom };
+  clients.push(c);
+  return c;
+};
+
+/**
+ * Fonction pour créer un compte en banque à un client (si le client existe)
+ */
+
+const createBankAccount = (clientId, solde = 0, type = 'courant') => {
+  if (!clients.some(c => c.id === clientId)) return console.log('Client non trouvé');
+  if (solde < 0) return console.log('Solde initial invalide');
+  const acc = { id: UUID(), clientId, solde, type, history: [] };
+  comptesBancaires.push(acc);
+  return acc;
+};
+
+/**
+ * Fonction pour supprimer un compte en banque si le solde est à 0.
+ */
+
+const deleteBankAccount = id => {
+  const i = comptesBancaires.findIndex(a => a.id === id);
+  if (i === -1) return console.log('Compte non trouvé');
+  if (comptesBancaires[i].solde !== 0) return console.log('Impossible de supprimer un compte avec un solde non nul');
+  return comptesBancaires.splice(i, 1)[0];
+};
+
+/**
+ * Fonctions de gestion des transactions.
+ */
+
+//dépot supérieur à 0 sinon erreur.
+const deposit = (id, amount) => {
+  const a = findAcct(id); if (!a) return console.log('Compte non trouvé');
+  if (!(amount > 0)) return console.log('Montant invalide');
+  a.solde += amount; pushTx(a, 'deposit', amount); return a.solde;
+};
+
+//retrait, sauf si le montant est supérieur au solde ou négatif.
+const withdraw = (id, amount) => {
+  const a = findAcct(id); if (!a) return console.log('Compte non trouvé');
+  if (!(amount > 0) || amount > a.solde) return console.log('Montant invalide ou fonds insuffisants');
+  a.solde -= amount; pushTx(a, 'withdraw', amount); return a.solde;
+};
+
+
+//transfert entre deux comptes, avec vérifications. (supérieur, pas négatif)
+const transfer = (fromId, toId, amount) => {
+  const f = findAcct(fromId), t = findAcct(toId); if (!f || !t) return console.log('Compte source ou destination introuvable');
+  if (!(amount > 0) || amount > f.solde) return console.log('Montant invalide ou fonds insuffisants');
+  f.solde -= amount; t.solde += amount; pushTx(f, 'transfer-debit', amount, { counterparty: toId }); pushTx(t, 'transfer-credit', amount, { counterparty: fromId });
+  return { from: f.solde, to: t.solde };
+};
+
+/**
+ * Afficher le total d'un ou des comptes d'un même client (si il y a plusieurs compte
+ * en banque) et afficher l'historique des transactions qu'il a effectué.
+ */
+
+const getAccountBalance = id => { const a = findAcct(id); if (!a) return console.log('Compte non trouvé'); return a.solde; };
+const getAccountHistory = id => { const a = findAcct(id); if (!a) return console.log('Compte non trouvé'); return a.history || []; };
+const getTotalBalance = id => {
+  if (clients.some(c => c.id === id)) return comptesBancaires.filter(a => a.clientId === id).reduce((s, a) => s + a.solde, 0);
+  const acct = comptesBancaires.find(a => a.id === id);
+  if (acct) return acct.solde;
+  console.log('Aucun compte bancaire trouvé pour cet id');
+  return 0;
+};
+
+/**
+ * Fonction pour avoir le total de tous les comptes en banques (donc total de la banque)
+ */
+const getBankTotalBalance = () => comptesBancaires.reduce((s, a) => s + a.solde, 0);
+
+
+//Console log pour affiche au moins les clients et les comptes en banques fixent.
+console.log({ clients, comptesBancaires });
