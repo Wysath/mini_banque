@@ -4,12 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Projet mini banque</title>
+    <link rel="stylesheet" href="style.css">
     <script src="script.js" defer></script>
 </head>
 <body>
-    <h1>Projet de mini banque</h1>
-    <p>Ceci est un projet de mini banque avec du JS</p>
-    <section>
+    <div class="container">
+        <header>
+            <h1>Projet — Mini banque</h1>
+            <p class="tagline">Petit projet pédagogique en JavaScript — logique comptes & transactions</p>
+        </header>
+        <main>
+    <section class="doc">
         <h2>Utilisation en console (fonctions disponibles)</h2>
         <p>Ouvrez la console du navigateur (F12) et utilisez les fonctions suivantes :</p>
         <ul>
@@ -23,8 +28,11 @@
             <li><code>getAccountHistory(accountId)</code> — retourne l'historique des transactions du compte. Ex : <code>getAccountHistory(a.id)</code></li>
             <li><code>getTotalBalance(id)</code> — si <code>id</code> est un client retourne la somme de tous ses comptes, si c'est un compte retourne le solde du compte. Ex : <code>getTotalBalance(c.id)</code> ou <code>getTotalBalance(a.id)</code></li>
             <li><code>getBankTotalBalance()</code> — retourne la somme de tous les comptes de la banque.</li>
+            <li><code>applyInterest(accountId, rate)</code> — applique des intérêts annuels sur un compte (rate en %, ex: 1.5). Ex : <code>applyInterest(a.id, 1.5)</code></li>
+            <li><code>applyFee(accountId, amount)</code> — applique des frais de tenue de compte mensuels (amount en €, ex: 2). Ex : <code>applyFee(a.id, 2)</code></li>
             <li><code>clients</code> et <code>comptesBancaires</code> — tableaux exposés pour inspection directe (console.log les affiche).</li>
         </ul>
+        <br>
         <h3>Notes</h3>
         <ul>
             <li>Les fonctions loggent des messages d'erreur avec <code>console.log</code> lorsque l'opération est invalide (compte non trouvé, montant invalide, etc.).</li>
@@ -32,5 +40,8 @@
             <li>Rechargez la page pour revenir à l'état initial si besoin.</li>
         </ul>
     </section>
+        </main>
+        <footer class="footer">&copy; Mini banque — projet pédagogique</footer>
+    </div>
 </body>
 </html>

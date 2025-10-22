@@ -115,6 +115,33 @@ const getTotalBalance = id => {
  */
 const getBankTotalBalance = () => comptesBancaires.reduce((s, a) => s + a.solde, 0);
 
+/**
+ * Appliquer des intérêts annuels sur un compte (ex: 1.5% par an).
+ */
+const applyInterest = (id, rate) => {
+  const a = findAcct(id); 
+  if (!a) return console.log('Compte non trouvé');
+  if (!(rate >= 0)) return console.log('Taux d\'intérêt invalide');
+  const interestAmount = a.solde * (rate / 100);
+  a.solde += interestAmount;
+  pushTx(a, 'interest', interestAmount, { rate });
+  console.log(`Intérêts de ${interestAmount.toFixed(2)} appliqués (taux: ${rate}%). Nouveau solde: ${a.solde.toFixed(2)}`);
+  return a.solde;
+};
+
+/**
+ * Appliquer des frais de tenue de compte mensuels (ex: 2€ par mois).
+ */
+const applyFee = (id, amount) => {
+  const a = findAcct(id); 
+  if (!a) return console.log('Compte non trouvé');
+  if (!(amount >= 0)) return console.log('Montant de frais invalide');
+  if (amount > a.solde) return console.log('Fonds insuffisants pour appliquer les frais');
+  a.solde -= amount;
+  pushTx(a, 'fee', amount);
+  console.log(`Frais de ${amount} appliqués. Nouveau solde: ${a.solde.toFixed(2)}`);
+  return a.solde;
+};
 
 //Console log pour affiche au moins les clients et les comptes en banques fixent.
 console.log({ clients, comptesBancaires });
