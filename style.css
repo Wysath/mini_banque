@@ -6,7 +6,7 @@
     --accent-dark:#9d5a7f;
     --success:#10b981;
     --warning:#f59e0b;
-    --danger:#ef4444;
+    --danger:#e82626;
     --info:#3b82f6;
     --border:#f3d5b5;
     --pastel-blue:#d4e4f7;
@@ -225,7 +225,7 @@ h2{
     font-size:12px;
     font-weight:600;
     text-transform:capitalize;
-    border:2px solid var(--pastel-blue);
+    border:2px solid var(--pastel-lavender);
 }
 
 .account-actions{
