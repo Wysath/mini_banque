@@ -8,6 +8,9 @@ const UUID = (typeof crypto !== 'undefined' && crypto.randomUUID)
   ? crypto.randomUUID.bind(crypto)
   : () => Date.now().toString(36) + Math.random().toString(36).slice(2);
 
+// Validation centralisée des montants
+const isValidAmount = (amount) => typeof amount === 'number' && !isNaN(amount) && amount > 0;
+
 // Données clients fixes
 const clients = [
   { id: '5e385eab-f13b-466a-9dff-e3b9121382c3', nom: 'Henry', prenom: 'Charles' },
@@ -29,7 +32,7 @@ const comptesBancaires = [
 // Trouver un compte par son ID
 const findAcct = id => comptesBancaires.find(a => a.id === id);
 
-// Ajouter une transaction à l'historique
+// Ajouter une transaction à l'historique 
 const pushTx = (acct, type, amount, meta = {}) => {
   acct.history = acct.history || [];
   acct.history.push({
@@ -37,7 +40,7 @@ const pushTx = (acct, type, amount, meta = {}) => {
     type,
     amount,
     balanceAfter: acct.solde,
-    timestamp: new Date().toISOString(),
+    date: new Date(), 
     ...meta
   });
 };
@@ -51,14 +54,16 @@ const createClient = (prenom, nom) => {
 
 // Créer un compte bancaire pour un client existant
 const createBankAccount = (clientId, solde = 0, type = 'courant') => {
-  if (!clients.some(c => c.id === clientId)) {
-    console.log('Client non trouvé');
-    return;
+  const client = clients.find(c => c.id === clientId);
+  
+  if (!client) {
+    throw new Error('Client non trouvé');
   }
-  if (!(solde > 0)) {
-    console.log('Solde initial invalide (doit être > 0)');
-    return;
+  
+  if (!isValidAmount(solde)) {
+    throw new Error('Solde initial invalide (doit être > 0)');
   }
+  
   const acc = { id: UUID(), clientId, solde, type, history: [] };
   comptesBancaires.push(acc);
   return acc;
@@ -67,28 +72,30 @@ const createBankAccount = (clientId, solde = 0, type = 'courant') => {
 // Supprimer un compte bancaire si le solde est à 0
 const deleteBankAccount = id => {
   const i = comptesBancaires.findIndex(a => a.id === id);
-  if (i === -1) {
-    console.log('Compte non trouvé');
-    return;
+  const account = i !== -1 ? comptesBancaires[i] : null;
+  
+  if (!account) {
+    throw new Error('Compte non trouvé');
   }
-  if (comptesBancaires[i].solde !== 0) {
-    console.log('Impossible de supprimer un compte avec un solde non nul');
-    return;
+  
+  if (account.solde > 0) {
+    throw new Error('Impossible de supprimer un compte avec un solde positif');
   }
+  
   return comptesBancaires.splice(i, 1)[0];
 };
 
 // Dépôt sur un compte
 const deposit = (id, amount) => {
+  if (!isValidAmount(amount)) {
+    throw new Error('Montant de dépôt invalide');
+  }
+  
   const a = findAcct(id);
   if (!a) {
-    console.log('Compte non trouvé');
-    return;
+    throw new Error('Compte non trouvé');
   }
-  if (!(amount > 0)) {
-    console.log('Montant invalide');
-    return;
-  }
+  
   a.solde += amount;
   pushTx(a, 'deposit', amount);
   return a.solde;
@@ -96,15 +103,19 @@ const deposit = (id, amount) => {
 
 // Retrait sur un compte
 const withdraw = (id, amount) => {
+  if (!isValidAmount(amount)) {
+    throw new Error('Montant de retrait invalide');
+  }
+  
   const a = findAcct(id);
   if (!a) {
-    console.log('Compte non trouvé');
-    return;
+    throw new Error('Compte non trouvé');
   }
-  if (!(amount > 0) || amount > a.solde) {
-    console.log('Montant invalide ou fonds insuffisants');
-    return;
+  
+  if (a.solde < amount) {
+    throw new Error('Fonds insuffisants');
   }
+  
   a.solde -= amount;
   pushTx(a, 'withdraw', amount);
   return a.solde;
@@ -112,19 +123,24 @@ const withdraw = (id, amount) => {
 
 // Transfert entre deux comptes
 const transfer = (fromId, toId, amount) => {
+  if (!isValidAmount(amount)) {
+    throw new Error('Montant de transfert invalide');
+  }
+  
   const f = findAcct(fromId), t = findAcct(toId);
   if (!f || !t) {
-    console.log('Compte source ou destination introuvable');
-    return;
+    throw new Error('Compte source ou destination introuvable');
   }
-  if (!(amount > 0) || amount > f.solde) {
-    console.log('Montant invalide ou fonds insuffisants');
-    return;
+  
+  if (f.solde < amount) {
+    throw new Error('Fonds insuffisants dans le compte source');
   }
+  
   f.solde -= amount;
   t.solde += amount;
-  pushTx(f, 'transfer-debit', amount, { counterparty: toId });
-  pushTx(t, 'transfer-credit', amount, { counterparty: fromId });
+  const now = new Date();
+  pushTx(f, 'transfer', amount, { to: toId, date: now });
+  pushTx(t, 'transfer', amount, { from: fromId, date: now });
   return { from: f.solde, to: t.solde };
 };
 
@@ -132,8 +148,7 @@ const transfer = (fromId, toId, amount) => {
 const getAccountBalance = id => {
   const a = findAcct(id);
   if (!a) {
-    console.log('Compte non trouvé');
-    return;
+    throw new Error('Compte non trouvé');
   }
   return a.solde;
 };
@@ -142,8 +157,7 @@ const getAccountBalance = id => {
 const getAccountHistory = id => {
   const a = findAcct(id);
   if (!a) {
-    console.log('Compte non trouvé');
-    return [];
+    throw new Error('Compte non trouvé');
   }
   return a.history || [];
 };
@@ -155,8 +169,7 @@ const getTotalBalance = id => {
   }
   const acct = comptesBancaires.find(a => a.id === id);
   if (acct) return acct.solde;
-  console.log('Aucun compte bancaire trouvé pour cet id');
-  return 0;
+  throw new Error('Aucun compte bancaire trouvé pour cet id');
 };
 
 // Obtenir le solde total de la banque
@@ -164,15 +177,31 @@ const getBankTotalBalance = () => comptesBancaires.reduce((s, a) => s + a.solde,
 
 // Appliquer des intérêts annuels
 const applyInterest = (id, rate) => {
+  if (!isValidAmount(rate) || rate > 100) {
+    throw new Error("Taux d'intérêt invalide");
+  }
+  
   const a = findAcct(id);
   if (!a) {
-    console.log('Compte non trouvé');
-    return;
+    throw new Error('Compte non trouvé');
   }
-  if (!(rate >= 0)) {
-    console.log("Taux d'intérêt invalide");
-    return;
+  
+  // Vérifier si des intérêts ont déjà été appliqués dans l'année
+  const now = new Date();
+  const lastInterestDate = a.history
+    ?.filter(tx => tx.type === 'interest')
+    .sort((a, b) => b.date - a.date)[0]?.date;
+  
+  if (lastInterestDate) {
+    const oneYearLater = new Date(lastInterestDate);
+    oneYearLater.setFullYear(oneYearLater.getFullYear() + 1);
+    
+    if (now < oneYearLater) {
+      console.log(`Intérêts déjà appliqués dans l'année pour le compte ID: ${a.id}`);
+      return a.solde;
+    }
   }
+  
   const interestAmount = a.solde * (rate / 100);
   a.solde += interestAmount;
   pushTx(a, 'interest', interestAmount, { rate });
@@ -182,19 +211,36 @@ const applyInterest = (id, rate) => {
 
 // Appliquer des frais de tenue de compte
 const applyFee = (id, amount) => {
+  if (!isValidAmount(amount)) {
+    throw new Error('Montant de frais invalide');
+  }
+  
   const a = findAcct(id);
   if (!a) {
-    console.log('Compte non trouvé');
-    return;
+    throw new Error('Compte non trouvé');
   }
-  if (!(amount >= 0)) {
-    console.log('Montant de frais invalide');
-    return;
-  }
+  
   if (amount > a.solde) {
     console.log('Fonds insuffisants pour appliquer les frais');
-    return;
+    return a.solde;
   }
+  
+  // Vérifier si des frais ont déjà été appliqués dans le mois
+  const now = new Date();
+  const lastFeeDate = a.history
+    ?.filter(tx => tx.type === 'fee')
+    .sort((a, b) => b.date - a.date)[0]?.date;
+  
+  if (lastFeeDate) {
+    const oneMonthLater = new Date(lastFeeDate);
+    oneMonthLater.setMonth(oneMonthLater.getMonth() + 1);
+    
+    if (now < oneMonthLater) {
+      console.log(`Frais déjà appliqués dans le mois pour le compte ID: ${a.id}`);
+      return a.solde;
+    }
+  }
+  
   a.solde -= amount;
   pushTx(a, 'fee', amount);
   console.log(`Frais de ${amount} appliqués. Nouveau solde: ${a.solde.toFixed(2)}`);
@@ -313,19 +359,16 @@ document.getElementById('createClientForm').addEventListener('submit', e => {
     showNotification('Veuillez remplir tous les champs', 'error');
     return;
   }
-  if (!(solde > 0)) {
-    showNotification('Le solde initial doit être supérieur à 0 €', 'error');
-    return;
-  }
-  const newClient = createClient(prenom, nom);
-  const newAccount = createBankAccount(newClient.id, solde, 'courant');
-  if (newAccount) {
+  
+  try {
+    const newClient = createClient(prenom, nom);
+    const newAccount = createBankAccount(newClient.id, solde, 'courant');
     showNotification(`Client ${prenom} ${nom} créé avec un compte courant de ${solde.toFixed(2)} € !`, 'success');
     e.target.reset();
     renderClients();
     renderAccounts();
-  } else {
-    showNotification('Erreur lors de la création du client ou du compte', 'error');
+  } catch (error) {
+    showNotification(error.message, 'error');
   }
 });
 
@@ -339,19 +382,16 @@ document.getElementById('createAccountForm').addEventListener('submit', e => {
     showNotification('Veuillez sélectionner un client', 'error');
     return;
   }
-  if (!(solde > 0)) {
-    showNotification('Le solde initial doit être supérieur à 0 €', 'error');
-    return;
-  }
-  const newAccount = createBankAccount(clientId, solde, type);
-  if (newAccount) {
+  
+  try {
+    const newAccount = createBankAccount(clientId, solde, type);
     const clientName = getClientName(clientId);
     showNotification(`Compte ${type} créé pour ${clientName} !`, 'success');
     e.target.reset();
     renderAccounts();
     renderClients();
-  } else {
-    showNotification('Erreur lors de la création du compte', 'error');
+  } catch (error) {
+    showNotification(error.message, 'error');
   }
 });
 
@@ -364,14 +404,15 @@ document.getElementById('depositForm').addEventListener('submit', e => {
     showNotification('Veuillez sélectionner un compte', 'error');
     return;
   }
-  const result = deposit(accountId, amount);
-  if (result !== undefined) {
+  
+  try {
+    deposit(accountId, amount);
     showNotification(`Dépôt de ${amount.toFixed(2)} € effectué avec succès !`, 'success');
     e.target.reset();
     renderAccounts();
     renderClients();
-  } else {
-    showNotification('Erreur lors du dépôt', 'error');
+  } catch (error) {
+    showNotification(error.message, 'error');
   }
 });
 
@@ -384,14 +425,15 @@ document.getElementById('withdrawForm').addEventListener('submit', e => {
     showNotification('Veuillez sélectionner un compte', 'error');
     return;
   }
-  const result = withdraw(accountId, amount);
-  if (result !== undefined) {
+  
+  try {
+    withdraw(accountId, amount);
     showNotification(`Retrait de ${amount.toFixed(2)} € effectué avec succès !`, 'success');
     e.target.reset();
     renderAccounts();
     renderClients();
-  } else {
-    showNotification('Erreur lors du retrait (fonds insuffisants ?)', 'error');
+  } catch (error) {
+    showNotification(error.message, 'error');
   }
 });
 
@@ -409,14 +451,15 @@ document.getElementById('transferForm').addEventListener('submit', e => {
     showNotification('Les comptes source et destination doivent être différents', 'error');
     return;
   }
-  const result = transfer(fromId, toId, amount);
-  if (result) {
+  
+  try {
+    transfer(fromId, toId, amount);
     showNotification(`Transfert de ${amount.toFixed(2)} € effectué avec succès !`, 'success');
     e.target.reset();
     renderAccounts();
     renderClients();
-  } else {
-    showNotification('Erreur lors du transfert', 'error');
+  } catch (error) {
+    showNotification(error.message, 'error');
   }
 });
 
@@ -433,13 +476,13 @@ window.handleDeleteAccount = accountId => {
   }
   const clientName = getClientName(account.clientId);
   if (confirm(`Êtes-vous sûr de vouloir supprimer ce compte de ${clientName} ?`)) {
-    const deleted = deleteBankAccount(accountId);
-    if (deleted) {
+    try {
+      deleteBankAccount(accountId);
       showNotification('Compte supprimé avec succès !', 'success');
       renderAccounts();
       renderClients();
-    } else {
-      showNotification('Erreur lors de la suppression', 'error');
+    } catch (error) {
+      showNotification(error.message, 'error');
     }
   }
 };
